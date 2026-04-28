@@ -1,31 +1,141 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PS4 Games</title>
+  <title>PS4 Games Store</title>
+
   <style>
-    body { font-family: Arial; background: #111; color: white; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 15px; padding: 20px; }
-    .card { background: #222; padding: 10px; border-radius: 10px; text-align: center; }
-    img { width: 100%; border-radius: 8px; }
-    input { width: 90%; padding: 10px; margin: 20px; font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0d1117;
+      color: white;
+    }
+
+    header {
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      background: #161b22;
+    }
+
+    input {
+      width: 90%;
+      margin: 15px auto;
+      display: block;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    .banner {
+      height: 200px;
+      background: linear-gradient(to right, #1f6feb, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #161b22;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+    }
+
+    .card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
+
+    .card p {
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #161b22;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .modal img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .close {
+      margin-top: 10px;
+      padding: 10px;
+      background: #1f6feb;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 6px;
+    }
   </style>
 </head>
+
 <body>
 
-<h2 style="text-align:center;">PS4 Games</h2>
+<header>🎮 PS4 Games Store</header>
+
+<div class="banner">
+  Explore 6000+ Games
+</div>
+
 <input type="text" id="search" placeholder="Search games...">
 
 <div class="grid" id="grid"></div>
 
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <img id="modal-img">
+    <h3 id="modal-title"></h3>
+    <button class="close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
 <script>
 async function loadCSV() {
-  const res = await fetch('ps4 games list - Sheet1.csv'); // change name
+  const res = await fetch('ps4 games list - Sheet1.csv'); // 🔥 change if needed
   const text = await res.text();
   const rows = text.split('\n').slice(1);
 
   const grid = document.getElementById('grid');
 
-  rows.forEach(row => {
+  rows.slice(0, 1000).forEach(row => {
     const cols = row.split(',');
     const name = cols[1];
     const img = cols[2];
@@ -34,12 +144,27 @@ async function loadCSV() {
 
     const card = document.createElement('div');
     card.className = 'card';
-    card.innerHTML = `<img src="${img}"><p>${name}</p>`;
+
+    card.innerHTML = `
+      <img src="${img}" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
+      <p>${name}</p>
+    `;
+
+    card.onclick = () => openModal(name, img);
+
     grid.appendChild(card);
   });
 }
 
-loadCSV();
+function openModal(name, img) {
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('modal-title').innerText = name;
+  document.getElementById('modal-img').src = img;
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+}
 
 document.getElementById('search').addEventListener('input', function() {
   const value = this.value.toLowerCase();
@@ -47,6 +172,8 @@ document.getElementById('search').addEventListener('input', function() {
     card.style.display = card.innerText.toLowerCase().includes(value) ? '' : 'none';
   });
 });
+
+loadCSV();
 </script>
 
 </body>
