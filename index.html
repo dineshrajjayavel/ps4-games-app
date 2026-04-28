@@ -4,12 +4,6 @@
   <title>PS4 Games Store</title>
 
   <style>
-    img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  background: #222;
-}
     body {
       margin: 0;
       font-family: Arial;
@@ -21,8 +15,16 @@
       padding: 15px;
       text-align: center;
       font-size: 24px;
-      font-weight: bold;
       background: #161b22;
+    }
+
+    .banner {
+      height: 200px;
+      background: linear-gradient(to right, #1f6feb, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
     }
 
     input {
@@ -33,16 +35,6 @@
       border-radius: 8px;
       border: none;
       font-size: 16px;
-    }
-
-    .banner {
-      height: 200px;
-      background: linear-gradient(to right, #1f6feb, #9333ea);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      font-weight: bold;
     }
 
     .grid {
@@ -56,19 +48,14 @@
       background: #161b22;
       border-radius: 12px;
       overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    }
-
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+      text-align: center;
     }
 
     .card img {
       width: 100%;
       height: 220px;
       object-fit: cover;
+      background: #222;
     }
 
     .card p {
@@ -76,39 +63,15 @@
       font-size: 14px;
     }
 
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content {
-      background: #161b22;
-      padding: 20px;
-      border-radius: 12px;
+    .pagination {
       text-align: center;
-      max-width: 400px;
+      margin: 20px;
     }
 
-    .modal img {
-      width: 100%;
-      border-radius: 10px;
-    }
-
-    .close {
-      margin-top: 10px;
-      padding: 10px;
-      background: #1f6feb;
-      border: none;
-      color: white;
+    button {
+      padding: 8px 12px;
+      margin: 5px;
       cursor: pointer;
-      border-radius: 6px;
     }
   </style>
 </head>
@@ -117,57 +80,74 @@
 
 <header>🎮 PS4 Games Store</header>
 
-<div class="banner">
-  Explore 6000+ Games
-</div>
+<div class="banner">Explore 6000+ Games</div>
 
 <input type="text" id="search" placeholder="Search games...">
 
 <div class="grid" id="grid"></div>
-  <div style="text-align:center; margin:20px;">
+
+<div class="pagination">
   <button onclick="prevPage()">⬅ Prev</button>
   <span id="page-info"></span>
   <button onclick="nextPage()">Next ➡</button>
 </div>
 
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <img id="modal-img">
-    <h3 id="modal-title"></h3>
-    <button class="close" onclick="closeModal()">Close</button>
-  </div>
-</div>
-
 <script>
 let allGames = [];
+let filteredGames = [];
 let currentPage = 1;
 const perPage = 100;
 
+// CSV parser (handles commas correctly)
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for (let char of text) {
+    if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === ',' && !insideQuotes) {
+      row.push(current);
+      current = '';
+    } else if (char === '\n' && !insideQuotes) {
+      row.push(current);
+      rows.push(row);
+      row = [];
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) row.push(current);
+  if (row.length) rows.push(row);
+
+  return rows;
+}
+
 async function loadCSV() {
-  const res = await fetch('ps4 games list - Sheet1.csv');
+  const res = await fetch('games.csv');
   const text = await res.text();
- const rows = text.split('\n').slice(1);
 
-allGames = rows.map(row => {
-  const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+  const data = parseCSV(text).slice(1);
 
-  return {
-    name: cols ? cols[1]?.replace(/"/g, '') : "",
-    img: cols ? cols[2]?.replace(/"/g, '') : ""
-  };
-});
+  allGames = data.map(cols => ({
+    name: cols[1],
+    img: cols[2]
+  }));
 
+  filteredGames = [...allGames];
   renderPage();
 }
 
 function renderPage() {
   const grid = document.getElementById('grid');
-  grid.innerHTML = "";
+  grid.innerHTML = '';
 
   const start = (currentPage - 1) * perPage;
-  const end = start + perPage;
-
-  const pageItems = allGames.slice(start, end);
+  const pageItems = filteredGames.slice(start, start + perPage);
 
   pageItems.forEach(game => {
     if (!game.name) return;
@@ -188,11 +168,11 @@ function renderPage() {
   });
 
   document.getElementById('page-info').innerText =
-    `Page ${currentPage}`;
+    `Page ${currentPage} of ${Math.ceil(filteredGames.length / perPage)}`;
 }
 
 function nextPage() {
-  if (currentPage * perPage < allGames.length) {
+  if (currentPage * perPage < filteredGames.length) {
     currentPage++;
     renderPage();
   }
@@ -205,7 +185,20 @@ function prevPage() {
   }
 }
 
+// SEARCH (fixed)
+document.getElementById('search').addEventListener('input', function() {
+  const value = this.value.toLowerCase();
+
+  filteredGames = allGames.filter(game =>
+    game.name && game.name.toLowerCase().includes(value)
+  );
+
+  currentPage = 1;
+  renderPage();
+});
+
 loadCSV();
 </script>
+
 </body>
 </html>
