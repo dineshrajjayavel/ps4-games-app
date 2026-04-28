@@ -124,6 +124,11 @@
 <input type="text" id="search" placeholder="Search games...">
 
 <div class="grid" id="grid"></div>
+  <div style="text-align:center; margin:20px;">
+  <button onclick="prevPage()">⬅ Prev</button>
+  <span id="page-info"></span>
+  <button onclick="nextPage()">Next ➡</button>
+</div>
 
 <div class="modal" id="modal">
   <div class="modal-content">
@@ -134,36 +139,71 @@
 </div>
 
 <script>
+let allGames = [];
+let currentPage = 1;
+const perPage = 100;
+
 async function loadCSV() {
-  const res = await fetch('ps4 games list - Sheet1.csv'); // 🔥 change if needed
+  const res = await fetch('games.csv'); // make sure name is correct
   const text = await res.text();
   const rows = text.split('\n').slice(1);
 
-  const grid = document.getElementById('grid');
-
-  rows.slice(0, 1000).forEach(row => {
+  allGames = rows.map(row => {
     const cols = row.split(',');
-    const name = cols[1];
-    const img = cols[2];
+    return {
+      name: cols[1],
+      img: cols[2]
+    };
+  });
 
-    if (!name) return;
+  renderPage();
+}
+
+function renderPage() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = "";
+
+  const start = (currentPage - 1) * perPage;
+  const end = start + perPage;
+
+  const pageItems = allGames.slice(start, end);
+
+  pageItems.forEach(game => {
+    if (!game.name) return;
+
+    const imageUrl = game.img && game.img.startsWith("http")
+      ? game.img
+      : "https://via.placeholder.com/300x400?text=No+Image";
 
     const card = document.createElement('div');
     card.className = 'card';
 
-    const imageUrl = img && img.startsWith("http")
-  ? img
-  : "https://via.placeholder.com/300x400?text=No+Image";
+    card.innerHTML = `
+      <img src="${imageUrl}" loading="lazy">
+      <p>${game.name}</p>
+    `;
 
-   card.innerHTML = `
-   <img src="${imageUrl}" loading="lazy">
-   <p>${name}</p>
-`;
-
-    card.onclick = () => openModal(name, img);
+    card.onclick = () => openModal(game.name, imageUrl);
 
     grid.appendChild(card);
   });
+
+  document.getElementById('page-info').innerText =
+    `Page ${currentPage} of ${Math.ceil(allGames.length / perPage)}`;
+}
+
+function nextPage() {
+  if (currentPage * perPage < allGames.length) {
+    currentPage++;
+    renderPage();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderPage();
+  }
 }
 
 function openModal(name, img) {
@@ -178,13 +218,16 @@ function closeModal() {
 
 document.getElementById('search').addEventListener('input', function() {
   const value = this.value.toLowerCase();
-  document.querySelectorAll('.card').forEach(card => {
-    card.style.display = card.innerText.toLowerCase().includes(value) ? '' : 'none';
-  });
+
+  allGames = allGames.filter(game =>
+    game.name && game.name.toLowerCase().includes(value)
+  );
+
+  currentPage = 1;
+  renderPage();
 });
 
 loadCSV();
 </script>
-
 </body>
 </html>
