@@ -146,15 +146,16 @@ const perPage = 100;
 async function loadCSV() {
   const res = await fetch('games.csv');
   const text = await res.text();
-  const rows = text.split('\n').slice(1);
+ const rows = text.split('\n').slice(1);
 
-  allGames = rows.map(row => {
-    const cols = row.split(',');
-    return {
-      name: cols[1],
-      img: cols[2]
-    };
-  });
+allGames = rows.map(row => {
+  const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+
+  return {
+    name: cols ? cols[1]?.replace(/"/g, '') : "",
+    img: cols ? cols[2]?.replace(/"/g, '') : ""
+  };
+});
 
   renderPage();
 }
