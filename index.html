@@ -144,7 +144,7 @@ let currentPage = 1;
 const perPage = 100;
 
 async function loadCSV() {
-  const res = await fetch('games.csv'); // make sure name is correct
+  const res = await fetch('games.csv');
   const text = await res.text();
   const rows = text.split('\n').slice(1);
 
@@ -183,13 +183,11 @@ function renderPage() {
       <p>${game.name}</p>
     `;
 
-    card.onclick = () => openModal(game.name, imageUrl);
-
     grid.appendChild(card);
   });
 
   document.getElementById('page-info').innerText =
-    `Page ${currentPage} of ${Math.ceil(allGames.length / perPage)}`;
+    `Page ${currentPage}`;
 }
 
 function nextPage() {
@@ -205,27 +203,6 @@ function prevPage() {
     renderPage();
   }
 }
-
-function openModal(name, img) {
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('modal-title').innerText = name;
-  document.getElementById('modal-img').src = img;
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-}
-
-document.getElementById('search').addEventListener('input', function() {
-  const value = this.value.toLowerCase();
-
-  allGames = allGames.filter(game =>
-    game.name && game.name.toLowerCase().includes(value)
-  );
-
-  currentPage = 1;
-  renderPage();
-});
 
 loadCSV();
 </script>
