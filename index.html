@@ -145,11 +145,14 @@ async function loadCSV() {
     const card = document.createElement('div');
     card.className = 'card';
 
-    card.innerHTML = `
-     <img src="${img || 'https://via.placeholder.com/300x400?text=No+Image'}"
-     onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
-      <p>${name}</p>
-    `;
+    const imageUrl = img && img.startsWith("http")
+  ? img
+  : "https://via.placeholder.com/300x400?text=No+Image";
+
+   card.innerHTML = `
+   <img src="${imageUrl}" loading="lazy">
+   <p>${name}</p>
+`;
 
     card.onclick = () => openModal(name, img);
 
