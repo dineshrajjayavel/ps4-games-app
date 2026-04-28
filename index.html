@@ -144,7 +144,7 @@ let currentPage = 1;
 const perPage = 100;
 
 async function loadCSV() {
-  const res = await fetch('games.csv');
+  const res = await fetch('ps4 games list - Sheet1.csv');
   const text = await res.text();
  const rows = text.split('\n').slice(1);
 
